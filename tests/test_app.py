@@ -1,9 +1,10 @@
 import os
 import sys
-from pathlib import Path
+import json
 import boto3
 import pytest
-from moto import mock_dynamodb2
+from moto.dynamodb import mock_dynamodb
+
 
 # Set environment variables before imports
 os.environ['AWS_REGION'] = 'us-east-1'
@@ -16,16 +17,10 @@ from src.app import lambda_handler
 
 @pytest.fixture
 def dynamodb_mock():
+    os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
     with mock_dynamodb():
         dynamodb = boto3.resource('dynamodb')
-        table = dynamodb.create_table(
-            TableName='resume-apptbl',
-            KeySchema=[{'AttributeName': 'ID', 'KeyType': 'HASH'}],
-            AttributeDefinitions=[{'AttributeName': 'ID', 'AttributeType': 'S'}],
-            BillingMode='PAY_PER_REQUEST'
-        )
-        table.put_item(Item={'ID': '1', 'counter': 0})
-        yield table
+        yield dynamodb
 
 def test_lambda_handler_increments_counter(dynamodb_mock):
     response = lambda_handler({}, None)
