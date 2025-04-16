@@ -1,32 +1,23 @@
+import boto3
 import os
 import json
-import boto3
-from decimal import Decimal
+from boto3.dynamodb.conditions import Attr
 
-dynamodb = boto3.resource('dynamodb', region_name=os.getenv('AWS_REGION', 'us-east-1'))
-table = dynamodb.Table('resume-apptbl')
+dynamodb = boto3.resource('dynamodb', region_name='us-west-2')
+table = dynamodb.Table('Visits')
 
 def lambda_handler(event, context):
-    # Use an atomic update operation to increment the counter
-    response = table.update_item(
-        Key={'ID': '1'},
-        UpdateExpression="SET #ctr = if_not_exists(#ctr, :start) + :inc",
-        ExpressionAttributeNames={'#ctr': 'counter'},  # Alias for reserved keyword
-        ExpressionAttributeValues={
-            ':start': Decimal(0),  # Default value if 'counter' does not exist
-            ':inc': Decimal(1)     # Increment by 1
-        },
-        ReturnValues="UPDATED_NEW"
-    )
-
-    visit_count = int(response['Attributes']['counter'])  # Convert Decimal to int
-
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Access-Control-Allow-Headers': '*',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': '*'
-        },
-        'body': json.dumps({'visit_count': visit_count})  # Now JSON serializable
-    }
+    try:
+        response = table.update_item(
+            Key={'ID': '1'},
+            UpdateExpression='SET #ctr = if_not_exists(#ctr, :start) + :inc',
+            ExpressionAttributeNames={'#ctr': 'counter'},
+            ExpressionAttributeValues={':inc': 1, ':start': 0},
+            ReturnValues='UPDATED_NEW'
+        )
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'visit_count': int(response['Attributes']['counter'])})
+        }
+    except Exception as e:
+        return {'statusCode': 500, 'body': str(e)}
