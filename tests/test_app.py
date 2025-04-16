@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 import boto3
 import pytest
-from moto import mock_dynamodb
+from moto import mock_dynamodb2
 
 # Set environment variables before imports
 os.environ['AWS_REGION'] = 'us-east-1'
