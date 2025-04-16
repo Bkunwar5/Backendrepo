@@ -1,24 +1,22 @@
-# Add this at the top of test_app.py
+import os
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
-
-
-
-
-import os
-import json
 import boto3
 import pytest
-from moto import mock_aws  # Changed from mock_dynamodb
+from moto import mock_aws
 
+# Set environment variables before imports
+os.environ['AWS_REGION'] = 'us-east-1'
 
+# Add project root to path
+sys.path.append(str(Path(__file__).parent.parent))
 
+# Now import your Lambda handler
 from src.app import lambda_handler
 
 @pytest.fixture
 def dynamodb_mock():
-    with mock_aws():  # Changed here
+    with mock_aws():
         dynamodb = boto3.resource('dynamodb')
         table = dynamodb.create_table(
             TableName='resume-apptbl',

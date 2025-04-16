@@ -1,9 +1,9 @@
-
+import os
 import json
 import boto3
 from decimal import Decimal
 
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb', region_name=os.getenv('AWS_REGION', 'us-east-1'))
 table = dynamodb.Table('resume-apptbl')
 
 def lambda_handler(event, context):
