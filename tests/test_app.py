@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 import boto3
 import pytest
-from moto import mock_aws
+from moto import mock_dynamodb
 
 # Set environment variables before imports
 os.environ['AWS_REGION'] = 'us-east-1'
@@ -16,7 +16,7 @@ from src.app import lambda_handler
 
 @pytest.fixture
 def dynamodb_mock():
-    with mock_aws():
+    with mock_dynamodb():
         dynamodb = boto3.resource('dynamodb')
         table = dynamodb.create_table(
             TableName='resume-apptbl',
