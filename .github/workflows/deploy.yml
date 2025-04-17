@@ -39,13 +39,12 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}  # Add this line to provide the AWS region from secrets
 
       - name: SAM Deploy
         run: |
           sam build
-          sam deploy \
-            --stack-name your-existing-stack-name \
-            --capabilities CAPABILITY_IAM \
-            --no-confirm-changeset \
-            --no-fail-on-empty-changeset
+          sam deploy --stack-name your-existing-stack-name \
+                      --capabilities CAPABILITY_IAM \
+                      --no-confirm-changeset \
+                      --no-fail-on-empty-changeset
