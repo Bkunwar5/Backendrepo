@@ -9,12 +9,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
+          python-version: '3.8'  # Use 3.8 for GitHub Actions runner
 
       - name: Install dependencies
         run: |
@@ -29,7 +30,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install AWS SAM CLI
         run: pip install aws-sam-cli
@@ -39,12 +41,9 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}  # Add this line to provide the AWS region from secrets
+          aws-region: ${{ secrets.AWS_REGION }}   # Make sure AWS_REGION is set in your GitHub Secrets
 
       - name: SAM Deploy
         run: |
           sam build
-          sam deploy --stack-name your-existing-stack-name \
-                      --capabilities CAPABILITY_IAM \
-                      --no-confirm-changeset \
-                      --no-fail-on-empty-changeset
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name my-stack-name
