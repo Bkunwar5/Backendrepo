@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'  # Use 3.8 for GitHub Actions runner
+          python-version: '3.13.3'  # Use 3.8 for GitHub Actions runner
 
       - name: Install dependencies
         run: |
