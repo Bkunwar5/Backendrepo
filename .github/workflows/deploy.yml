@@ -44,4 +44,8 @@ jobs:
       - name: SAM Deploy
         run: |
           sam build
-          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
+          sam deploy \
+            --stack-name your-existing-stack-name \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
