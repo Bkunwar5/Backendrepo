@@ -50,12 +50,26 @@ jobs:
         run: |
           sam build --use-container
 
-      - name: Deploy to AWS
+      # Optional: Preview changes without applying them
+      # Remove this block if you’re confident and want auto-deploy
+      - name: Preview Changes (Dry Run)
         run: |
           sam deploy \
-            --no-confirm-changeset \
-            --no-fail-on-empty-changeset \
-            --stack-name my-backend-stack \
+            --stack-name resume-app \
             --region ${{ secrets.AWS_REGION }} \
             --s3-bucket ${{ secrets.S3_BUCKET }} \
-            --capabilities CAPABILITY_IAM
+            --capabilities CAPABILITY_IAM \
+            --no-execute-changeset \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+
+      # Uncomment the following to actually deploy AFTER preview
+      # - name: Deploy to AWS
+      #   run: |
+      #     sam deploy \
+      #       --stack-name resume-app \
+      #       --region ${{ secrets.AWS_REGION }} \
+      #       --s3-bucket ${{ secrets.S3_BUCKET }} \
+      #       --capabilities CAPABILITY_IAM \
+      #       --no-confirm-changeset \
+      #       --no-fail-on-empty-changeset
