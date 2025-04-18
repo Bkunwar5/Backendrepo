@@ -108,17 +108,19 @@ Resources:
         KeyType: HASH
     Metadata:
       SamResourceId: DynamoDBTable
+  Resources:
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # Attach the DynamoDBCrudPolicy that allows CRUD operations on the table
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: resume-apptbl
+        - DynamoDBCrudPolicy:
+            TableName: resume-apptbl  # Ensure this table name matches your DynamoDB table exactly
       CodeUri: HelloWorldFunction
       Handler: app.lambda_handler
       Runtime: python3.13
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         HelloWorld:
           Type: Api
@@ -127,6 +129,7 @@ Resources:
             Method: get
     Metadata:
       SamResourceId: HelloWorldFunction
+
 Outputs:
   HelloWorldApi:
     Description: API Gateway endpoint URL for Prod stage for Hello World function
@@ -136,11 +139,11 @@ Outputs:
     Description: Hello World Lambda Function ARN
     Value:
       Fn::GetAtt:
-      - HelloWorldFunction
-      - Arn
+        - HelloWorldFunction
+        - Arn
   HelloWorldFunctionIamRole:
     Description: Implicit IAM Role created for Hello World function
     Value:
       Fn::GetAtt:
-      - HelloWorldFunctionRole
-      - Arn
+        - HelloWorldFunctionRole
+        - Arn
