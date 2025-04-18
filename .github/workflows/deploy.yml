@@ -57,4 +57,5 @@ jobs:
             --no-fail-on-empty-changeset \
             --stack-name my-backend-stack \
             --region ${{ secrets.AWS_REGION }} \
-            --s3-bucket ${{ secrets.S3_BUCKET }}
+            --s3-bucket ${{ secrets.S3_BUCKET }} \
+            --capabilities CAPABILITY_IAM
