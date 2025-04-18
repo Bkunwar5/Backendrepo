@@ -64,12 +64,13 @@ jobs:
             --no-fail-on-empty-changeset
 
       # Uncomment the following to actually deploy AFTER preview
-      # - name: Deploy to AWS
-      #   run: |
-      #     sam deploy \
-      #       --stack-name resume-app \
-      #       --region ${{ secrets.AWS_REGION }} \
-      #       --s3-bucket ${{ secrets.S3_BUCKET }} \
-      #       --capabilities CAPABILITY_IAM \
-      #       --no-confirm-changeset \
-      #       --no-fail-on-empty-changeset
+      - name: Deploy to AWS
+        run: |
+         sam deploy \
+         --stack-name resume-app \
+         --region ${{ secrets.AWS_REGION }} \
+         --s3-bucket ${{ secrets.S3_BUCKET }} \
+         --capabilities CAPABILITY_IAM \
+         --no-confirm-changeset \
+         --no-fail-on-empty-changeset
+
