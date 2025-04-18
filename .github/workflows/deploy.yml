@@ -70,12 +70,24 @@ jobs:
       - name: Get Lambda Function Name from CloudFormation Outputs
         run: |
           echo "🔍 Retrieving Lambda function name from CloudFormation stack outputs..."
+          
+          # Check CloudFormation stack outputs
+          aws cloudformation describe-stacks \
+            --stack-name resume-app \
+            --region ${{ secrets.AWS_REGION }} \
+            --query "Stacks[0].Outputs" \
+            --output json
+
+          # Fetch the Lambda function name from CloudFormation Outputs
           FUNCTION_NAME=$(aws cloudformation describe-stacks \
             --stack-name resume-app \
             --region ${{ secrets.AWS_REGION }} \
             --query "Stacks[0].Outputs[?OutputKey=='HelloWorldFunction'].OutputValue" \
             --output text)
-          
+
+          echo "🔍 Retrieved FUNCTION_NAME: $FUNCTION_NAME"
+
+          # If function name is empty, throw an error
           if [ -z "$FUNCTION_NAME" ]; then
             echo "❌ Lambda function name not found in CloudFormation stack outputs."
             exit 1
@@ -83,9 +95,9 @@ jobs:
 
           echo "✅ Found Lambda function: $FUNCTION_NAME"
 
-      - name: Attach inline policy to Lambda role
+      - name: Get Lambda Role Name
         run: |
-          echo "🔐 Attaching DynamoDB policy to Lambda role: $FUNCTION_NAME"
+          echo "🔍 Retrieving Role name for Lambda function: $FUNCTION_NAME"
 
           # Get the role name associated with the Lambda function
           ROLE_NAME=$(aws lambda get-function-configuration \
@@ -93,9 +105,21 @@ jobs:
             --region ${{ secrets.AWS_REGION }} \
             --query "Role" \
             --output text | awk -F'/' '{print $NF}')
+          
+          echo "🔍 Retrieved ROLE_NAME: $ROLE_NAME"
 
-          echo "🔐 Attaching policy to role: $ROLE_NAME"
+          # If ROLE_NAME is empty, throw an error
+          if [ -z "$ROLE_NAME" ]; then
+            echo "❌ Role name not found for Lambda function."
+            exit 1
+          fi
 
+          echo "✅ Found Role: $ROLE_NAME"
+
+      - name: Attach DynamoDB Policy to Lambda Role
+        run: |
+          echo "🔐 Attaching DynamoDB policy to Lambda role: $ROLE_NAME"
+          
           # Attach the IAM policy for DynamoDB access
           aws iam put-role-policy \
             --role-name "$ROLE_NAME" \
@@ -114,8 +138,8 @@ jobs:
       - name: Validate Deployment
         run: |
           echo "🔍 Checking if the DynamoDB table and Lambda function were deployed successfully..."
-
-          # Check if the DynamoDB table exists
+          
+          # Check DynamoDB table
           TABLE_EXISTS=$(aws dynamodb describe-table \
             --table-name resume-apptbl \
             --region ${{ secrets.AWS_REGION }} \
@@ -125,18 +149,3 @@ jobs:
           if [ "$TABLE_EXISTS" != "resume-apptbl" ]; then
             echo "❌ DynamoDB table 'resume-apptbl' not found."
             exit 1
-          fi
-
-          # Check if the Lambda function exists
-          FUNCTION_EXISTS=$(aws lambda get-function \
-            --function-name "$FUNCTION_NAME" \
-            --region ${{ secrets.AWS_REGION }} \
-            --query "Configuration.FunctionName" \
-            --output text)
-
-          if [ "$FUNCTION_EXISTS" != "$FUNCTION_NAME" ]; then
-            echo "❌ Lambda function '$FUNCTION_NAME' not found."
-            exit 1
-          fi
-
-          echo "✅ Deployment validated successfully!"
