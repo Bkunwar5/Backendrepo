@@ -70,23 +70,11 @@ jobs:
       - name: Get Lambda Function Name from CloudFormation Outputs
         run: |
           echo "🔍 Retrieving Lambda function name from CloudFormation stack outputs..."
-
-          # Debugging: Print all outputs of the CloudFormation stack
-          aws cloudformation describe-stacks \
-            --stack-name resume-app \
-            --region ${{ secrets.AWS_REGION }} \
-            --query "Stacks[0].Outputs" \
-            --output json
-
-          # Fetch the Lambda function name from CloudFormation Outputs
           FUNCTION_NAME=$(aws cloudformation describe-stacks \
             --stack-name resume-app \
             --region ${{ secrets.AWS_REGION }} \
             --query "Stacks[0].Outputs[?OutputKey=='HelloWorldFunction'].OutputValue" \
             --output text)
-
-          # Debugging: Print the retrieved function name to check if it's empty
-          echo "🔍 Retrieved FUNCTION_NAME: $FUNCTION_NAME"
           
           if [ -z "$FUNCTION_NAME" ]; then
             echo "❌ Lambda function name not found in CloudFormation stack outputs."
@@ -106,13 +94,7 @@ jobs:
             --query "Role" \
             --output text | awk -F'/' '{print $NF}')
 
-          # Debugging: Print the role name to ensure it's not empty
-          echo "🔐 Retrieved ROLE_NAME: $ROLE_NAME"
-
-          if [ -z "$ROLE_NAME" ]; then
-            echo "❌ Role name not found for Lambda function."
-            exit 1
-          fi
+          echo "🔐 Attaching policy to role: $ROLE_NAME"
 
           # Attach the IAM policy for DynamoDB access
           aws iam put-role-policy \
@@ -158,4 +140,3 @@ jobs:
           fi
 
           echo "✅ Deployment validated successfully!"
-
