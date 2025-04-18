@@ -8,10 +8,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up Python
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
         uses: actions/setup-python@v4
         with:
           python-version: '3.13'
@@ -29,30 +31,30 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: read
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker (Required for SAM build with containers)
-        uses: docker/setup-buildx-action@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install AWS SAM CLI
         run: |
           pip install aws-sam-cli
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: SAM Build using Docker
-        run: sam build --use-container
-
-      - name: SAM Deploy
+      - name: Build Lambda Function
         run: |
-          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name my-backend-stack
+          sam build --use-container
+
+      - name: Deploy to AWS
+        run: |
+          sam deploy \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name my-backend-stack \
+            --region ${{ secrets.AWS_REGION }} \
+            --s3-bucket ${{ secrets.S3_BUCKET }}
