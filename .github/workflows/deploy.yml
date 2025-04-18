@@ -51,8 +51,7 @@ jobs:
         run: |
           mkdir -p HelloWorldFunction
           mv src/app.py HelloWorldFunction/
-          # If your requirements.txt is also in the src directory:
-          mv src/requirements.txt HelloWorldFunction/
+          mv requirements.txt HelloWorldFunction/
           # Add more 'mv' commands for any other necessary files or directories
 
       - name: Build Lambda Function
