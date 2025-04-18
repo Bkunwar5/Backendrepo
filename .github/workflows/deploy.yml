@@ -51,6 +51,7 @@ jobs:
           mkdir -p HelloWorldFunction
           mv src/app.py HelloWorldFunction/
           mv requirements.txt HelloWorldFunction/
+          # Add more 'mv' lines if other files are needed
 
       - name: Build Lambda Function
         run: |
@@ -68,16 +69,29 @@ jobs:
 
       - name: Attach inline policy to Lambda role
         run: |
-          FUNCTION_NAME="resume-app-HelloWorldFunction"
+          echo "🔍 Looking for Lambda function in CloudFormation stack..."
+
+          FUNCTION_NAME=$(aws cloudformation describe-stack-resources \
+            --stack-name resume-app \
+            --query "StackResources[?ResourceType=='AWS::Lambda::Function'].PhysicalResourceId" \
+            --output text)
+
+          echo "✅ Found function: $FUNCTION_NAME"
+
+          if [ -z "$FUNCTION_NAME" ]; then
+            echo "❌ Lambda function not found in CloudFormation stack."
+            exit 1
+          fi
+
           ROLE_NAME=$(aws lambda get-function-configuration \
-            --function-name $FUNCTION_NAME \
+            --function-name "$FUNCTION_NAME" \
             --query "Role" \
             --output text | awk -F'/' '{print $NF}')
 
-          echo "Attaching policy to role: $ROLE_NAME"
+          echo "🔐 Attaching policy to role: $ROLE_NAME"
 
           aws iam put-role-policy \
-            --role-name $ROLE_NAME \
+            --role-name "$ROLE_NAME" \
             --policy-name AllowDynamoDBUpdateItem \
             --policy-document '{
               "Version": "2012-10-17",
