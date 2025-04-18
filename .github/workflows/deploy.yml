@@ -46,6 +46,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      # Add a step to create the HelloWorldFunction directory and move your code
+      - name: Prepare Lambda Code Directory
+        run: |
+          mkdir -p HelloWorldFunction
+          # Assuming your Lambda function code (app.py etc.) is in the root of your repository
+          # Adjust the source path if your code is in a different location
+          mv app.py HelloWorldFunction/
+          # If you have other necessary files, move them as well
+          # mv other_file.txt HelloWorldFunction/
+
       - name: Build Lambda Function
         run: |
           sam build --use-container
@@ -66,11 +76,10 @@ jobs:
       # Uncomment the following to actually deploy AFTER preview
       - name: Deploy to AWS
         run: |
-         sam deploy \
-         --stack-name resume-app \
-         --region ${{ secrets.AWS_REGION }} \
-         --s3-bucket ${{ secrets.S3_BUCKET }} \
-         --capabilities CAPABILITY_IAM \
-         --no-confirm-changeset \
-         --no-fail-on-empty-changeset
-
+          sam deploy \
+            --stack-name resume-app \
+            --region ${{ secrets.AWS_REGION }} \
+            --s3-bucket ${{ secrets.S3_BUCKET }} \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
