@@ -99,7 +99,36 @@ jobs:
                 {
                   "Effect": "Allow",
                   "Action": "dynamodb:UpdateItem",
-                  "Resource": "arn:aws:dynamodb:us-west-2:904233132000:table/Visits"
+                  "Resource": "arn:aws:dynamodb:us-east-1:904233132000:table/resume-apptbl"
                 }
               ]
             }'
+
+      - name: Validate Deployment
+        run: |
+          echo "🔍 Checking if the DynamoDB table and Lambda function were deployed successfully..."
+          # Checking DynamoDB table
+          TABLE_EXISTS=$(aws dynamodb describe-table \
+            --table-name resume-apptbl \
+            --region ${{ secrets.AWS_REGION }} \
+            --query "Table.TableName" \
+            --output text)
+
+          if [ "$TABLE_EXISTS" != "resume-apptbl" ]; then
+            echo "❌ DynamoDB table 'resume-apptbl' not found."
+            exit 1
+          fi
+
+          # Checking Lambda function
+          FUNCTION_EXISTS=$(aws lambda get-function \
+            --function-name "$FUNCTION_NAME" \
+            --region ${{ secrets.AWS_REGION }} \
+            --query "Configuration.FunctionName" \
+            --output text)
+
+          if [ "$FUNCTION_EXISTS" != "$FUNCTION_NAME" ]; then
+            echo "❌ Lambda function '$FUNCTION_NAME' not found."
+            exit 1
+          fi
+
+          echo "✅ Deployment validated successfully!"
