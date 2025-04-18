@@ -71,6 +71,13 @@ jobs:
         run: |
           echo "🔍 Retrieving Lambda function name from CloudFormation stack outputs..."
 
+          # Debugging: Print all outputs of the CloudFormation stack
+          aws cloudformation describe-stacks \
+            --stack-name resume-app \
+            --region ${{ secrets.AWS_REGION }} \
+            --query "Stacks[0].Outputs" \
+            --output json
+
           # Fetch the Lambda function name from CloudFormation Outputs
           FUNCTION_NAME=$(aws cloudformation describe-stacks \
             --stack-name resume-app \
@@ -151,3 +158,4 @@ jobs:
           fi
 
           echo "✅ Deployment validated successfully!"
+
