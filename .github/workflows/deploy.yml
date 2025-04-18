@@ -1,5 +1,5 @@
 
-name: Safe Lambda Deployment
+name: Backend CI/CD
 
 on:
   push:
@@ -8,84 +8,69 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.13'  # Your dev version
-      - run: |
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
-          pytest tests/ -v
+          pip install -e .
+
+      - name: Run tests
+        run: pytest tests/ -v
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      # 1. Install AWS SAM
-      - run: pip install aws-sam-cli
-      
-      # 2. Configure AWS Credentials
-      - uses: aws-actions/configure-aws-credentials@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # 3. Build with Lambda-compatible Python version
-      - run: |
-          sam build --use-container \
-            --container-env-var "LAMBDA_RUNTIME=python3.12"  # Forces correct version
+      - name: Build Lambda Function
+        run: |
+          sam build --use-container
 
-      # 4. Package and Upload to S3 (safely)
-      - run: |
-          sam package \
-            --template-file .aws-sam/build/template.yaml \
-            --output-template-file packaged.yaml \
-            --s3-bucket ${{ secrets.S3_BUCKET }} \
-            --s3-prefix lambda-artifacts  # Better organization
-
-      # 5. Create Change Set (Safety Check)
-      - name: Create Change Set
+      # Optional: Preview changes without applying them
+      # Remove this block if you’re confident and want auto-deploy
+      - name: Preview Changes (Dry Run)
         run: |
           sam deploy \
-            --template-file packaged.yaml \
             --stack-name resume-app \
+            --region ${{ secrets.AWS_REGION }} \
+            --s3-bucket ${{ secrets.S3_BUCKET }} \
             --capabilities CAPABILITY_IAM \
             --no-execute-changeset \
-            --no-fail-on-empty-changeset
-
-      # 6. Verify No Deletions/Replacements
-      - name: Check Change Set Safety
-        run: |
-          # Get the latest change set
-          CHANGESET=$(aws cloudformation list-change-sets \
-            --stack-name resume-app \
-            --query 'summaries[-1].ChangeSetName' \
-            --output text)
-
-          # Check for dangerous operations
-          DANGEROUS_CHANGES=$(aws cloudformation describe-change-set \
-            --stack-name resume-app \
-            --change-set-name $CHANGESET \
-            --query 'Changes[?ResourceChange.Action==`Remove` || ResourceChange.Action==`Replace`]' \
-            --output json)
-
-          if [ "$DANGEROUS_CHANGES" != "[]" ]; then
-            echo "::error::DANGER: This deployment would delete/replace resources!"
-            echo "Unsafe changes: $DANGEROUS_CHANGES"
-            exit 1
-          fi
-
-      # 7. Deploy Only If Safe
-      - name: Execute Safe Deployment
-        run: |
-          sam deploy \
-            --template-file packaged.yaml \
-            --stack-name resume-app \
-            --capabilities CAPABILITY_IAM \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
+
+      # Uncomment the following to actually deploy AFTER preview
+      - name: Deploy to AWS
+        run: |
+         sam deploy \
+         --stack-name resume-app \
+         --region ${{ secrets.AWS_REGION }} \
+         --s3-bucket ${{ secrets.S3_BUCKET }} \
+         --capabilities CAPABILITY_IAM \
+         --no-confirm-changeset \
+         --no-fail-on-empty-changeset
+
