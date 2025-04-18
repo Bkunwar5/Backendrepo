@@ -76,12 +76,12 @@ jobs:
             --query "StackResources[?ResourceType=='AWS::Lambda::Function'].PhysicalResourceId" \
             --output text)
 
-          echo "✅ Found function: $FUNCTION_NAME"
-
           if [ -z "$FUNCTION_NAME" ]; then
             echo "❌ Lambda function not found in CloudFormation stack."
             exit 1
           fi
+
+          echo "✅ Found function: $FUNCTION_NAME"
 
           ROLE_NAME=$(aws lambda get-function-configuration \
             --function-name "$FUNCTION_NAME" \
@@ -107,6 +107,7 @@ jobs:
       - name: Validate Deployment
         run: |
           echo "🔍 Checking if the DynamoDB table and Lambda function were deployed successfully..."
+          
           # Checking DynamoDB table
           TABLE_EXISTS=$(aws dynamodb describe-table \
             --table-name resume-apptbl \
