@@ -51,7 +51,6 @@ jobs:
           mkdir -p HelloWorldFunction
           mv src/app.py HelloWorldFunction/
           mv requirements.txt HelloWorldFunction/
-          # Add more 'mv' lines if other files are needed
 
       - name: Build Lambda Function
         run: |
@@ -67,85 +66,19 @@ jobs:
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
 
-      - name: Get Lambda Function Name from CloudFormation Outputs
+      - name: Get Lambda Function ARN from CloudFormation Outputs
         run: |
-          echo "🔍 Retrieving Lambda function name from CloudFormation stack outputs..."
-          
-          # Check CloudFormation stack outputs
-          aws cloudformation describe-stacks \
-            --stack-name resume-app \
-            --region ${{ secrets.AWS_REGION }} \
-            --query "Stacks[0].Outputs" \
-            --output json
+          echo "🔍 Retrieving Lambda function ARN from CloudFormation stack outputs..."
 
-          # Fetch the Lambda function name from CloudFormation Outputs
-          FUNCTION_NAME=$(aws cloudformation describe-stacks \
+          # Retrieve function ARN from CloudFormation Outputs
+          FUNCTION_ARN=$(aws cloudformation describe-stacks \
             --stack-name resume-app \
             --region ${{ secrets.AWS_REGION }} \
             --query "Stacks[0].Outputs[?OutputKey=='HelloWorldFunction'].OutputValue" \
             --output text)
 
-          echo "🔍 Retrieved FUNCTION_NAME: $FUNCTION_NAME"
+          echo "🔍 Retrieved FUNCTION_ARN: $FUNCTION_ARN"
 
-          # If function name is empty, throw an error
-          if [ -z "$FUNCTION_NAME" ]; then
-            echo "❌ Lambda function name not found in CloudFormation stack outputs."
-            exit 1
-          fi
+          # If the ARN is empty
 
-          echo "✅ Found Lambda function: $FUNCTION_NAME"
-
-      - name: Get Lambda Role Name
-        run: |
-          echo "🔍 Retrieving Role name for Lambda function: $FUNCTION_NAME"
-
-          # Get the role name associated with the Lambda function
-          ROLE_NAME=$(aws lambda get-function-configuration \
-            --function-name "$FUNCTION_NAME" \
-            --region ${{ secrets.AWS_REGION }} \
-            --query "Role" \
-            --output text | awk -F'/' '{print $NF}')
-          
-          echo "🔍 Retrieved ROLE_NAME: $ROLE_NAME"
-
-          # If ROLE_NAME is empty, throw an error
-          if [ -z "$ROLE_NAME" ]; then
-            echo "❌ Role name not found for Lambda function."
-            exit 1
-          fi
-
-          echo "✅ Found Role: $ROLE_NAME"
-
-      - name: Attach DynamoDB Policy to Lambda Role
-        run: |
-          echo "🔐 Attaching DynamoDB policy to Lambda role: $ROLE_NAME"
-          
-          # Attach the IAM policy for DynamoDB access
-          aws iam put-role-policy \
-            --role-name "$ROLE_NAME" \
-            --policy-name AllowDynamoDBUpdateItem \
-            --policy-document '{
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": "dynamodb:UpdateItem",
-                  "Resource": "arn:aws:dynamodb:us-east-1:904233132000:table/resume-apptbl"
-                }
-              ]
-            }'
-
-      - name: Validate Deployment
-        run: |
-          echo "🔍 Checking if the DynamoDB table and Lambda function were deployed successfully..."
-          
-          # Check DynamoDB table
-          TABLE_EXISTS=$(aws dynamodb describe-table \
-            --table-name resume-apptbl \
-            --region ${{ secrets.AWS_REGION }} \
-            --query "Table.TableName" \
-            --output text)
-
-          if [ "$TABLE_EXISTS" != "resume-apptbl" ]; then
-            echo "❌ DynamoDB table 'resume-apptbl' not found."
-            exit 1
+            
