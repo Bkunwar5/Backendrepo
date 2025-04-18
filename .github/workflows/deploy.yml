@@ -67,23 +67,25 @@ jobs:
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
 
-      - name: Attach inline policy to Lambda role
+      - name: Get Lambda Function Name from CloudFormation Outputs
         run: |
-          echo "🔍 Looking for Lambda function in CloudFormation stack..."
-
-          # Get the function name from CloudFormation stack resources
-          FUNCTION_NAME=$(aws cloudformation describe-stack-resources \
+          echo "🔍 Retrieving Lambda function name from CloudFormation stack outputs..."
+          FUNCTION_NAME=$(aws cloudformation describe-stacks \
             --stack-name resume-app \
             --region ${{ secrets.AWS_REGION }} \
-            --query "StackResources[?ResourceType=='AWS::Lambda::Function'].PhysicalResourceId" \
+            --query "Stacks[0].Outputs[?OutputKey=='HelloWorldFunction'].OutputValue" \
             --output text)
-
+          
           if [ -z "$FUNCTION_NAME" ]; then
-            echo "❌ Lambda function not found in CloudFormation stack."
+            echo "❌ Lambda function name not found in CloudFormation stack outputs."
             exit 1
           fi
 
-          echo "✅ Found function: $FUNCTION_NAME"
+          echo "✅ Found Lambda function: $FUNCTION_NAME"
+
+      - name: Attach inline policy to Lambda role
+        run: |
+          echo "🔐 Attaching DynamoDB policy to Lambda role: $FUNCTION_NAME"
 
           # Get the role name associated with the Lambda function
           ROLE_NAME=$(aws lambda get-function-configuration \
@@ -112,7 +114,7 @@ jobs:
       - name: Validate Deployment
         run: |
           echo "🔍 Checking if the DynamoDB table and Lambda function were deployed successfully..."
-          
+
           # Check if the DynamoDB table exists
           TABLE_EXISTS=$(aws dynamodb describe-table \
             --table-name resume-apptbl \
