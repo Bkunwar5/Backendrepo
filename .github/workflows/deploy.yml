@@ -71,8 +71,10 @@ jobs:
         run: |
           echo "🔍 Looking for Lambda function in CloudFormation stack..."
 
+          # Get the function name from CloudFormation stack resources
           FUNCTION_NAME=$(aws cloudformation describe-stack-resources \
             --stack-name resume-app \
+            --region ${{ secrets.AWS_REGION }} \
             --query "StackResources[?ResourceType=='AWS::Lambda::Function'].PhysicalResourceId" \
             --output text)
 
@@ -83,13 +85,16 @@ jobs:
 
           echo "✅ Found function: $FUNCTION_NAME"
 
+          # Get the role name associated with the Lambda function
           ROLE_NAME=$(aws lambda get-function-configuration \
             --function-name "$FUNCTION_NAME" \
+            --region ${{ secrets.AWS_REGION }} \
             --query "Role" \
             --output text | awk -F'/' '{print $NF}')
 
           echo "🔐 Attaching policy to role: $ROLE_NAME"
 
+          # Attach the IAM policy for DynamoDB access
           aws iam put-role-policy \
             --role-name "$ROLE_NAME" \
             --policy-name AllowDynamoDBUpdateItem \
@@ -108,7 +113,7 @@ jobs:
         run: |
           echo "🔍 Checking if the DynamoDB table and Lambda function were deployed successfully..."
           
-          # Checking DynamoDB table
+          # Check if the DynamoDB table exists
           TABLE_EXISTS=$(aws dynamodb describe-table \
             --table-name resume-apptbl \
             --region ${{ secrets.AWS_REGION }} \
@@ -120,7 +125,7 @@ jobs:
             exit 1
           fi
 
-          # Checking Lambda function
+          # Check if the Lambda function exists
           FUNCTION_EXISTS=$(aws lambda get-function \
             --function-name "$FUNCTION_NAME" \
             --region ${{ secrets.AWS_REGION }} \
