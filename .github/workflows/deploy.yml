@@ -50,10 +50,9 @@ jobs:
       - name: Prepare Lambda Code Directory
         run: |
           mkdir -p HelloWorldFunction
-          # Replace 'path/to/your/app.py' with the actual path to your Lambda handler file
-          mv path/to/your/app.py HelloWorldFunction/
-          # If you have a requirements.txt file in the same directory as app.py, move it too
-          # mv path/to/your/requirements.txt HelloWorldFunction/
+          mv src/app.py HelloWorldFunction/
+          # If your requirements.txt is also in the src directory:
+          mv src/requirements.txt HelloWorldFunction/
           # Add more 'mv' commands for any other necessary files or directories
 
       - name: Build Lambda Function
